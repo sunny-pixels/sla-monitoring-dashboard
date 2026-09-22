@@ -191,10 +191,13 @@ as $$
            else null end,
     'latency', jsonb_build_object(
       'samples', o.latency_samples,
-      'avgMs',   round(o.latency_avg, 1),
-      'p50Ms',   round(o.latency_p50, 1),
-      'p95Ms',   round(o.latency_p95, 1),
-      'p99Ms',   round(o.latency_p99, 1)
+      -- percentile_cont() returns double precision, and Postgres has no
+      -- round(double precision, integer) overload — only round(numeric, ..) —
+      -- so every percentile/avg here is cast to numeric first.
+      'avgMs',   round(o.latency_avg::numeric, 1),
+      'p50Ms',   round(o.latency_p50::numeric, 1),
+      'p95Ms',   round(o.latency_p95::numeric, 1),
+      'p99Ms',   round(o.latency_p99::numeric, 1)
     ),
     'rangeStart',          o.range_start,
     'rangeEnd',            o.range_end,
@@ -206,8 +209,8 @@ as $$
         'successfulCheckpoints', ps.successful_checkpoints,
         'availabilityPct',
           round(100.0 * ps.successful_checkpoints / nullif(ps.valid_checkpoints, 0), 4),
-        'latencyAvgMs', round(ps.latency_avg, 1),
-        'latencyP95Ms', round(ps.latency_p95, 1)
+        'latencyAvgMs', round(ps.latency_avg::numeric, 1),
+        'latencyP95Ms', round(ps.latency_p95::numeric, 1)
       ) order by ps.service_id)
       from per_service ps
     )
