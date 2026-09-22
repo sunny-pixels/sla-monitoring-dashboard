@@ -67,14 +67,28 @@ estimated.
 ## Architecture — what runs where, and why
 
 ```mermaid
+%%{init: {'flowchart': {'nodeSpacing': 55, 'rankSpacing': 95, 'curve': 'basis'}}}%%
 flowchart LR
-    U[Browser] -->|drag & drop CSV| W[Next.js Dashboard<br/>Vercel]
-    W -->|chunked POST, direct| CF[Cloudflare Worker<br/>Hono]
-    CF -->|parse · validate<br/>clean · dedupe| CF
-    CF -->|upsert / RPC| DB[(Supabase<br/>PostgreSQL)]
-    W -->|GET /api/stats<br/>GET /api/logs| CF
-    CF -->|SQL aggregation<br/>get_sla_stats·paginated query| DB
-    DB --> CF --> W
+    Browser(["Browser"])
+    Frontend["Next.js Dashboard<br/>Vercel"]
+    Worker["Cloudflare Worker<br/>Hono"]
+    DB[("Supabase<br/>PostgreSQL")]
+
+    Browser -->|drag &amp; drop CSV| Frontend
+    Frontend -->|"chunked upload<br/>POST /api/uploads/:id/chunk"| Worker
+    Frontend -->|"GET /api/stats<br/>GET /api/logs"| Worker
+    Worker -->|"validate · clean<br/>dedupe · upsert"| DB
+    Worker -->|"get_sla_stats()<br/>paginated query"| DB
+
+    classDef browser fill:#f1f5f9,stroke:#64748b,color:#0f172a,stroke-width:1.5px;
+    classDef frontend fill:#eef2ff,stroke:#4f46e5,color:#1e1b4b,stroke-width:1.5px;
+    classDef worker fill:#fff7ed,stroke:#ea580c,color:#7c2d12,stroke-width:1.5px;
+    classDef database fill:#ecfdf5,stroke:#059669,color:#064e3b,stroke-width:1.5px;
+
+    class Browser browser
+    class Frontend frontend
+    class Worker worker
+    class DB database
 ```
 
 The browser **never** talks to Postgres directly, and it never routes the upload through a Next.js
