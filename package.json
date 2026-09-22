@@ -9,7 +9,7 @@
   ],
   "scripts": {
     "build:core": "tsc -p packages/core/tsconfig.json",
-    "test": "npm run build:core && node --test tests/",
+    "test": "npm run build:core && node --test \"tests/**/*.test.mjs\"",
     "typecheck": "tsc -p packages/core/tsconfig.json --noEmit && npm -w apps/worker run typecheck",
     "dev:worker": "npm -w apps/worker run dev",
     "dev:web": "npm -w apps/web run dev"
