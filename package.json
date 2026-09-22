@@ -1,0 +1,23 @@
+{
+  "name": "sla-monitoring-dashboard",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Health-check CSV → Cloudflare Worker → Supabase Postgres → single-screen SLA observability dashboard",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "build:core": "tsc -p packages/core/tsconfig.json",
+    "test": "npm run build:core && node --test tests/",
+    "typecheck": "tsc -p packages/core/tsconfig.json --noEmit && npm -w apps/worker run typecheck",
+    "dev:worker": "npm -w apps/worker run dev",
+    "dev:web": "npm -w apps/web run dev"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.3"
+  }
+}

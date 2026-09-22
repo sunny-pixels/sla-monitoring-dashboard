@@ -1,0 +1,45 @@
+# dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# secrets — never commit
+.env
+.env.*
+!.env.example
+.dev.vars
+.dev.vars.*
+!.dev.vars.example
+
+# next.js
+.next/
+out/
+build/
+dist/
+*.tsbuildinfo
+next-env.d.ts
+
+# cloudflare / wrangler
+.wrangler/
+.mf/
+
+# vercel
+.vercel
+
+# testing
+coverage/
+.nyc_output/
+
+# logs
+*.log
+npm-debug.log*
+yarn-error.log*
+
+# os / editor
+.DS_Store
+Thumbs.db
+*.swp
+.idea/
+
+# generated test artifacts
+tests/.tmp/
