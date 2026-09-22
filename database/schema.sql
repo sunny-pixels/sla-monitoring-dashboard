@@ -354,6 +354,7 @@ declare
   v_range_end       timestamptz;
   v_interval        int;
   v_rows_received   int;
+  v_rows_rejected   int;
   v_exact           int;
   v_observer        int;
   v_residual        int;
@@ -378,8 +379,8 @@ begin
   ) g
   where gap_seconds > 0;
 
-  select rows_received, exact_duplicates_removed, observer_duplicates_resolved
-    into v_rows_received, v_exact, v_observer
+  select rows_received, rows_rejected, exact_duplicates_removed, observer_duplicates_resolved
+    into v_rows_received, v_rows_rejected, v_exact, v_observer
   from uploads where id = p_upload_id;
 
   -- I6a/I6b duplicates split across a chunk boundary are removed correctly
@@ -391,7 +392,15 @@ begin
   -- most per upload), and never affects rows_accepted or SLA correctness —
   -- see the equivalent, more precisely-categorized handling in
   -- apps/worker/src/memory-store.ts for the in-memory store.
+  --
+  -- rows_rejected MUST be subtracted here — a row that disappeared between
+  -- received and accepted might have been rejected (bad timestamp, missing
+  -- field, ...), not deduplicated at all. Omitting it was a real bug: every
+  -- one of the 5 supplied fixtures has rows_rejected = 0, so it was
+  -- multiplied away and invisible until a CSV with genuine rejections
+  -- (fixtures never produce one) was run through this function.
   v_residual := greatest(0, coalesce(v_rows_received, 0) - coalesce(v_row_count, 0)
+                             - coalesce(v_rows_rejected, 0)
                              - coalesce(v_exact, 0) - coalesce(v_observer, 0));
 
   update uploads

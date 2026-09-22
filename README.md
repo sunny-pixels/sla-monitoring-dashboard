@@ -480,19 +480,28 @@ rejection, light/dark theme, mobile viewport (390px), and — the actual point o
 database instead of an in-memory placeholder — **data surviving a full Worker process restart**,
 confirmed byte-identical before and after.
 
-Three real bugs were caught this way, not by inspection, and are fixed in the current code:
+Four real bugs were caught this way, not by inspection, and are fixed in the current code:
 `round(double precision, integer)` has no overload in Postgres (only `round(numeric, ..)` does, and
 `percentile_cont()` always returns `double precision`); a hydration mismatch from the theme-init
-script setting `data-theme` before React hydrates; and cross-chunk duplicate detection that updated
-summary counters but not the itemized quality-issue breakdown.
+script setting `data-theme` before React hydrates; cross-chunk duplicate detection that updated
+summary counters but not the itemized quality-issue breakdown; and a residual-duplicate formula in
+`finalize_upload()` that forgot to subtract `rows_rejected`, inflating the duplicate count by exactly
+the rejected-row count whenever a dataset had any rejections. That last one is the most interesting
+of the four: all 5 supplied fixtures have `rows_rejected = 0`, so it was mathematically invisible for
+the entire build — it only surfaced when a hand-crafted adversarial CSV (deliberately including a
+malformed timestamp and a blank required field, on top of duplicates and an invalid status code) was
+run through the live production deployment. Confirmed by comparing the raw `uploads` row against the
+`quality_issues` breakdown it should have matched: `observer_duplicates_resolved` read 3 where exactly
+1 conflict had actually been detected. Fixed by adding the missing term to the residual formula.
 
 ---
 
 ## Known limitations
 
 - **Cross-chunk duplicate categorization is approximate in the real store.** The *total* duplicate
-  count is always exact (reconciled from an actual `count(*)` at finalize time), but the **split**
-  between "byte-exact" and "conflicting" can be imprecise when a duplicate pair spans a chunk
+  count is exact (reconciled from an actual `count(*)` at finalize time, correctly accounting for
+  rejected rows too — see the Testing section above for the bug this used to have), but the **split**
+  between "byte-exact" and "conflicting" can still be imprecise when a duplicate pair spans a chunk
   boundary — `finalize_upload()` folds that residual into `observer_duplicates_resolved` rather than
   reconstructing which class it belonged to. This only affects the cosmetic breakdown shown in the
   upload-complete dialog; it never affects `rows_accepted`, coverage, availability, or incidents. See
