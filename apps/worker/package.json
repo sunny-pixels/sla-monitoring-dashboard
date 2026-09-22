@@ -1,0 +1,21 @@
+{
+  "name": "@sla/worker",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Cloudflare Worker — receives uploaded CSV chunks, cleans them via @sla/core, persists to Postgres, and serves the dashboard's stats/logs API.",
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@sla/core": "*",
+    "hono": "^4.6.11"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20241127.0",
+    "typescript": "^5.6.3",
+    "wrangler": "^4.0.0"
+  }
+}

@@ -77,6 +77,33 @@ export function collapseToCheckpoints(checks: CleanedCheck[]): Checkpoint[] {
   return [...bestByKey.values()].sort((a, b) => a.checkedAt.getTime() - b.checkedAt.getTime());
 }
 
+/**
+ * Per-UTC-day availability, used for the "where do the outages fall" bar
+ * strip in the SLA overview. Purely a presentation aid — the headline
+ * availability figure is always the overall check-point calculation above,
+ * never an average of these daily figures (which would misweight short days
+ * at a range boundary).
+ */
+export function computeDailyAvailability(
+  checkpoints: Checkpoint[],
+): Array<{ date: string; availabilityPct: number | null; validCheckpoints: number }> {
+  const byDay = new Map<string, { total: number; success: number }>();
+  for (const cp of checkpoints) {
+    const day = cp.checkedAt.toISOString().slice(0, 10);
+    const bucket = byDay.get(day) ?? { total: 0, success: 0 };
+    bucket.total++;
+    if (cp.isSuccess) bucket.success++;
+    byDay.set(day, bucket);
+  }
+  return [...byDay.entries()]
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([date, { total, success }]) => ({
+      date,
+      availabilityPct: total > 0 ? Math.round((10000 * success) / total) / 100 : null,
+      validCheckpoints: total,
+    }));
+}
+
 function percentile(sorted: number[], p: number): number | null {
   if (sorted.length === 0) return null;
   if (sorted.length === 1) return sorted[0]!;

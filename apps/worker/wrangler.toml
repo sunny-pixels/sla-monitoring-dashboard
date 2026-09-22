@@ -1,0 +1,13 @@
+name = "sla-monitoring-worker"
+main = "src/index.ts"
+compatibility_date = "2024-11-01"
+compatibility_flags = ["nodejs_compat"]
+
+[observability]
+enabled = true
+
+# Local-dev keep-alive placeholder. Once Supabase is wired in (Stage B/C),
+# this becomes the daily ping that prevents the free-tier project from
+# pausing after 7 days of inactivity (see README "Deployment").
+# [triggers]
+# crons = ["0 3 * * *"]

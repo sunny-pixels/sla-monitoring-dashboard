@@ -83,6 +83,7 @@ export function validateAndCleanRow(row: RawRow): ValidationOutcome {
     serviceId: row.service_id,
     serviceName: row.service_name,
     checkedAt: date,
+    checkedAtRaw: row.timestamp,
     statusCode,
     statusValid,
     isSuccess,

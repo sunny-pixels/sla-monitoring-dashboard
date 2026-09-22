@@ -70,6 +70,16 @@ export interface CleanedCheck {
   serviceId: string;
   serviceName: string;
   checkedAt: Date;
+  /**
+   * The timestamp exactly as written in the source row, before normalization.
+   * Not persisted to the database — it exists so duplicate-detection can
+   * distinguish a true byte-exact repeat from two rows that name the same
+   * UTC instant in different formats (I1 x I6): e.g. `...Z` vs an equivalent
+   * `+05:30` offset. Both resolve to the same `checkedAt`, but only the
+   * former is a byte-exact duplicate; docs/data-audit.md §2 (I6b) documents
+   * a real fixture row-pair of exactly this shape.
+   */
+  checkedAtRaw: string;
   statusCode: number;
   /** false for values outside [100,600), e.g. 999 (I3) — excluded from the SLA denominator. */
   statusValid: boolean;
