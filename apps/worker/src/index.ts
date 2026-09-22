@@ -4,10 +4,14 @@
  * this). Responsible for parsing, validating, cleaning and persisting
  * uploaded CSV chunks, and for serving the dashboard's stats/logs queries.
  *
- * Storage is pluggable (see store.ts): today it's an in-memory placeholder
- * (memory-store.ts) so the full flow can be verified in the browser without
- * a Supabase project; database/schema.sql + a SupabaseStore implementation
- * is what the deployed Worker will actually use.
+ * Storage is pluggable (see store.ts): SupabaseStore (real, persistent
+ * Postgres — see database/schema.sql) is used whenever SUPABASE_URL and
+ * SUPABASE_SERVICE_ROLE_KEY are configured; MemoryStore (memory-store.ts) is
+ * an explicitly-labeled local-dev-only fallback for iterating on the UI
+ * without a Supabase project. The Worker is created fresh per request
+ * (getStore()), matching how Workers isolates actually behave — nothing
+ * about correctness depends on any module-level state surviving between
+ * requests.
  */
 
 import { Hono } from "hono";
@@ -24,12 +28,15 @@ import {
   type UploadSummaryDto,
 } from "@sla/core";
 import { createMemoryStore } from "./memory-store.js";
-import type { LogsQuery, UploadRecord } from "./store.js";
+import { createSupabaseStore } from "./supabase-store.js";
+import type { LogsQuery, Store, UploadRecord } from "./store.js";
 
 interface Bindings {
   ALLOWED_ORIGINS?: string;
   MAX_CHUNK_BYTES?: string;
   MAX_ROWS_PER_UPLOAD?: string;
+  SUPABASE_URL?: string;
+  SUPABASE_SERVICE_ROLE_KEY?: string;
 }
 
 const DEFAULT_MAX_CHUNK_BYTES = 1_048_576; // 1MB
@@ -42,9 +49,16 @@ app.use("*", async (c, next) => {
   return cors({ origin: allowed, allowMethods: ["GET", "POST", "OPTIONS"] })(c, next);
 });
 
-// Storage: in-memory today (LOCAL DEV ONLY — see store.ts). Swapping to
-// SupabaseStore once configured is a one-line change here.
-const store = createMemoryStore();
+function getStore(env: Bindings): Store {
+  if (env.SUPABASE_URL && env.SUPABASE_SERVICE_ROLE_KEY) {
+    return createSupabaseStore(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
+  }
+  return createMemoryStore();
+}
+
+function activeStoreName(env: Bindings): "supabase" | "memory" {
+  return env.SUPABASE_URL && env.SUPABASE_SERVICE_ROLE_KEY ? "supabase" : "memory";
+}
 
 function errorResponse(code: string, message: string): ApiErrorDto {
   return { success: false, error: { code, message } };
@@ -70,9 +84,12 @@ function toUploadSummaryDto(u: UploadRecord): UploadSummaryDto {
   };
 }
 
-app.get("/api/health", (c) => c.json({ status: "ok", store: "memory", time: new Date().toISOString() }));
+app.get("/api/health", (c) =>
+  c.json({ status: "ok", store: activeStoreName(c.env), time: new Date().toISOString() }),
+);
 
 app.post("/api/uploads", async (c) => {
+  const store = getStore(c.env);
   const body = await c.req.json<{ filename?: string; fileSizeBytes?: number }>().catch(() => null);
   if (!body?.filename) {
     return c.json(errorResponse("INVALID_REQUEST", "filename is required"), 400);
@@ -85,6 +102,7 @@ app.post("/api/uploads", async (c) => {
 });
 
 app.post("/api/uploads/:id/chunk", async (c) => {
+  const store = getStore(c.env);
   const uploadId = c.req.param("id");
   const existing = await store.getUpload(uploadId);
   if (!existing) return c.json(errorResponse("UPLOAD_NOT_FOUND", "Unknown upload id"), 404);
@@ -132,6 +150,7 @@ app.post("/api/uploads/:id/chunk", async (c) => {
 });
 
 app.post("/api/uploads/:id/finalize", async (c) => {
+  const store = getStore(c.env);
   const uploadId = c.req.param("id");
   const existing = await store.getUpload(uploadId);
   if (!existing) return c.json(errorResponse("UPLOAD_NOT_FOUND", "Unknown upload id"), 404);
@@ -167,11 +186,13 @@ app.post("/api/uploads/:id/finalize", async (c) => {
 });
 
 app.get("/api/datasets", async (c) => {
+  const store = getStore(c.env);
   const list = await store.listUploads();
   return c.json({ data: list.map(toUploadSummaryDto) });
 });
 
 app.get("/api/stats", async (c) => {
+  const store = getStore(c.env);
   const uploadId = c.req.query("uploadId");
   if (!uploadId) return c.json(errorResponse("INVALID_REQUEST", "uploadId is required"), 400);
 
@@ -206,6 +227,7 @@ app.get("/api/stats", async (c) => {
 });
 
 app.get("/api/logs", async (c) => {
+  const store = getStore(c.env);
   const uploadId = c.req.query("uploadId");
   if (!uploadId) return c.json(errorResponse("INVALID_REQUEST", "uploadId is required"), 400);
 
@@ -225,17 +247,17 @@ app.get("/api/logs", async (c) => {
   const result = await store.getLogs(uploadId, query);
   if (!result) return c.json(errorResponse("UPLOAD_NOT_FOUND", "Unknown upload id"), 404);
 
-  const rows: LogRowDto[] = result.data.map((c) => ({
-    id: c.id,
-    serviceId: c.serviceId,
-    serviceName: c.serviceName,
-    checkedAt: c.checkedAt.toISOString(),
-    statusCode: c.statusCode,
-    statusValid: c.statusValid,
-    isSuccess: c.isSuccess,
-    latencyMs: c.latencyMs,
-    agent: c.agent,
-    region: c.region,
+  const rows: LogRowDto[] = result.data.map((row) => ({
+    id: row.id,
+    serviceId: row.serviceId,
+    serviceName: row.serviceName,
+    checkedAt: row.checkedAt.toISOString(),
+    statusCode: row.statusCode,
+    statusValid: row.statusValid,
+    isSuccess: row.isSuccess,
+    latencyMs: row.latencyMs,
+    agent: row.agent,
+    region: row.region,
   }));
 
   const response: LogsResponseDto = {
