@@ -41,5 +41,8 @@ Thumbs.db
 *.swp
 .idea/
 
+# local Claude Code tooling config (machine-specific, not part of the app)
+.claude/
+
 # generated test artifacts
 tests/.tmp/

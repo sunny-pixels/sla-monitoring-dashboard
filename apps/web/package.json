@@ -1,0 +1,33 @@
+{
+  "name": "@sla/web",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Single-screen SLA observability dashboard — Next.js frontend for the SLA Monitoring Dashboard.",
+  "type": "module",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@radix-ui/react-collapsible": "^1.1.2",
+    "@radix-ui/react-dialog": "^1.1.4",
+    "clsx": "^2.1.1",
+    "lucide-react": "^0.468.0",
+    "next": "^15.1.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "recharts": "^3.0.0",
+    "tailwind-merge": "^2.5.5"
+  },
+  "devDependencies": {
+    "@sla/core": "*",
+    "@tailwindcss/postcss": "^4.0.0",
+    "@types/node": "^22.10.1",
+    "@types/react": "^19.0.1",
+    "@types/react-dom": "^19.0.2",
+    "tailwindcss": "^4.0.0",
+    "typescript": "^5.6.3"
+  }
+}

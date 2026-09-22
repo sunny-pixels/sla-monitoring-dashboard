@@ -1,0 +1,224 @@
+@import "tailwindcss";
+
+/* ─────────────────────────────────────────────────────────────────────────
+   Design tokens — "Observability / Control Room" identity.
+   Neutral near-black/off-white surfaces, a single indigo-cyan accent used
+   only for emphasis and interactive elements, semantic status colors used
+   only for status. See docs/data-audit.md and README for the reasoning.
+   ───────────────────────────────────────────────────────────────────────── */
+
+:root {
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-space-grotesk), var(--font-sans);
+  --font-mono: var(--font-ibm-plex-mono), ui-monospace, "SF Mono", Menlo, monospace;
+
+  --color-bg: #f8fafc;
+  --color-surface: #ffffff;
+  --color-surface-raised: #ffffff;
+  --color-border: #e2e8f0;
+  --color-border-strong: #cbd5e1;
+
+  --color-text: #0f172a;
+  --color-text-muted: #475569;
+  --color-text-faint: #94a3b8;
+
+  --color-accent: #4f46e5;
+  --color-accent-hover: #4338ca;
+  --color-accent-soft: #eef2ff;
+  --color-accent-text: #4338ca;
+
+  --color-success: #16a34a;
+  --color-success-soft: #f0fdf4;
+  --color-success-border: #bbf7d0;
+  --color-warning: #d97706;
+  --color-warning-soft: #fffbeb;
+  --color-warning-border: #fde68a;
+  --color-danger: #dc2626;
+  --color-danger-soft: #fef2f2;
+  --color-danger-border: #fecaca;
+  --color-neutral: #64748b;
+  --color-neutral-soft: #f1f5f9;
+
+  --shadow-sm: 0 1px 2px 0 rgb(15 23 42 / 0.04);
+  --shadow-md: 0 4px 12px -2px rgb(15 23 42 / 0.06), 0 2px 4px -2px rgb(15 23 42 / 0.04);
+  --shadow-lg: 0 12px 32px -8px rgb(15 23 42 / 0.12);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --color-bg: #0a0b0f;
+    --color-surface: #111318;
+    --color-surface-raised: #15171e;
+    --color-border: #23262f;
+    --color-border-strong: #34384a;
+
+    --color-text: #e7e9ee;
+    --color-text-muted: #9aa1b2;
+    --color-text-faint: #5b6172;
+
+    --color-accent: #6366f1;
+    --color-accent-hover: #818cf8;
+    --color-accent-soft: #1a1b3a;
+    --color-accent-text: #a5b4fc;
+
+    --color-success: #34d399;
+    --color-success-soft: #0d2318;
+    --color-success-border: #14532d;
+    --color-warning: #fbbf24;
+    --color-warning-soft: #2a1f06;
+    --color-warning-border: #78350f;
+    --color-danger: #f87171;
+    --color-danger-soft: #2a1215;
+    --color-danger-border: #7f1d1d;
+    --color-neutral: #8890a2;
+    --color-neutral-soft: #1a1c24;
+
+    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.3);
+    --shadow-md: 0 4px 16px -4px rgb(0 0 0 / 0.5);
+    --shadow-lg: 0 16px 40px -8px rgb(0 0 0 / 0.6);
+  }
+}
+
+:root[data-theme="dark"] {
+  --color-bg: #0a0b0f;
+  --color-surface: #111318;
+  --color-surface-raised: #15171e;
+  --color-border: #23262f;
+  --color-border-strong: #34384a;
+
+  --color-text: #e7e9ee;
+  --color-text-muted: #9aa1b2;
+  --color-text-faint: #5b6172;
+
+  --color-accent: #6366f1;
+  --color-accent-hover: #818cf8;
+  --color-accent-soft: #1a1b3a;
+  --color-accent-text: #a5b4fc;
+
+  --color-success: #34d399;
+  --color-success-soft: #0d2318;
+  --color-success-border: #14532d;
+  --color-warning: #fbbf24;
+  --color-warning-soft: #2a1f06;
+  --color-warning-border: #78350f;
+  --color-danger: #f87171;
+  --color-danger-soft: #2a1215;
+  --color-danger-border: #7f1d1d;
+  --color-neutral: #8890a2;
+  --color-neutral-soft: #1a1c24;
+
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.3);
+  --shadow-md: 0 4px 16px -4px rgb(0 0 0 / 0.5);
+  --shadow-lg: 0 16px 40px -8px rgb(0 0 0 / 0.6);
+}
+
+@theme inline {
+  --color-bg: var(--color-bg);
+  --color-surface: var(--color-surface);
+  --color-surface-raised: var(--color-surface-raised);
+  --color-border: var(--color-border);
+  --color-border-strong: var(--color-border-strong);
+  --color-text: var(--color-text);
+  --color-text-muted: var(--color-text-muted);
+  --color-text-faint: var(--color-text-faint);
+  --color-accent: var(--color-accent);
+  --color-accent-hover: var(--color-accent-hover);
+  --color-accent-soft: var(--color-accent-soft);
+  --color-accent-text: var(--color-accent-text);
+  --color-success: var(--color-success);
+  --color-success-soft: var(--color-success-soft);
+  --color-success-border: var(--color-success-border);
+  --color-warning: var(--color-warning);
+  --color-warning-soft: var(--color-warning-soft);
+  --color-warning-border: var(--color-warning-border);
+  --color-danger: var(--color-danger);
+  --color-danger-soft: var(--color-danger-soft);
+  --color-danger-border: var(--color-danger-border);
+  --color-neutral: var(--color-neutral);
+  --color-neutral-soft: var(--color-neutral-soft);
+
+  --font-sans: var(--font-sans);
+  --font-display: var(--font-display);
+  --font-mono: var(--font-mono);
+}
+
+* {
+  border-color: var(--color-border);
+}
+
+html {
+  color-scheme: light dark;
+}
+
+body {
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Subtle grid backdrop for the page — the "control room" texture. Restrained
+   on purpose: a faint line grid, not a decorative pattern. */
+.grid-backdrop {
+  background-image:
+    linear-gradient(to right, var(--color-border) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--color-border) 1px, transparent 1px);
+  background-size: 40px 40px;
+  -webkit-mask-image: radial-gradient(ellipse 80% 60% at 50% -10%, black 40%, transparent 100%);
+  mask-image: radial-gradient(ellipse 80% 60% at 50% -10%, black 40%, transparent 100%);
+  opacity: 0.5;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .grid-backdrop {
+    opacity: 0.25;
+  }
+}
+:root[data-theme="dark"] .grid-backdrop {
+  opacity: 0.25;
+}
+
+::selection {
+  background: var(--color-accent);
+  color: white;
+}
+
+/* Visible focus ring for keyboard navigation — never rely on color alone. */
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+@theme {
+  --animate-collapse-down: collapse-down 200ms cubic-bezier(0.16, 1, 0.3, 1);
+  --animate-collapse-up: collapse-up 200ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes collapse-down {
+  from { height: 0; opacity: 0; }
+  to { height: var(--radix-collapsible-content-height); opacity: 1; }
+}
+@keyframes collapse-up {
+  from { height: var(--radix-collapsible-content-height); opacity: 1; }
+  to { height: 0; opacity: 0; }
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}
+.pulse-dot {
+  animation: pulse-dot 2s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pulse-dot {
+    animation: none;
+  }
+  * {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+}

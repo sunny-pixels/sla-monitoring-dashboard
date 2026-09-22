@@ -129,16 +129,20 @@ export function createMemoryStore(): Store {
       state.record.exactDuplicatesRemoved += chunk.exactDuplicatesRemoved + crossChunkExact;
       state.record.observerDuplicatesResolved += chunk.observerDuplicatesResolved + crossChunkConflicts;
 
-      // Merge per-chunk quality issue counts by code.
+      // Merge per-chunk quality issue counts by code, PLUS the cross-chunk
+      // counts detected above — otherwise a duplicate pair split across a
+      // chunk boundary would be reflected in the numeric summary counters
+      // but silently missing from the itemized quality-issue breakdown.
       const merged = new Map(state.record.qualityIssues.map((i) => [i.code, { ...i }]));
-      for (const issue of chunk.issues) {
-        const existing = merged.get(issue.code);
-        if (existing) {
-          existing.count += issue.count;
-        } else {
-          merged.set(issue.code, { ...issue });
-        }
-      }
+      const bump = (code: (typeof chunk.issues)[number]["code"], count: number, severity: "info" | "warning") => {
+        if (count <= 0) return;
+        const existing = merged.get(code);
+        if (existing) existing.count += count;
+        else merged.set(code, { code, count, severity });
+      };
+      for (const issue of chunk.issues) bump(issue.code, issue.count, issue.severity);
+      bump("EXACT_DUPLICATE_REMOVED", crossChunkExact, "info");
+      bump("OBSERVER_CONFLICT_RESOLVED", crossChunkConflicts, "info");
       state.record.qualityIssues = [...merged.values()];
     },
 
